@@ -1,5 +1,5 @@
-# PetGameBackend
-An HTTP API which could be used to power a simple virtual pet game.
+# Cirara
+Cirara (Commits in Repository as REST API) provides a JSON log of commits from Git repositories. 
 
 - Users have animals 
 - Stroking animals makes them happy  
