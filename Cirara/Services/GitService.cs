@@ -5,6 +5,7 @@ using System.Linq;
 using Cirara.Models.Data;
 using LibGit2Sharp;
 using Microsoft.Extensions.Configuration;
+using static System.String;
 using Branch = Cirara.Models.Data.Branch;
 
 namespace Cirara.Services
@@ -12,6 +13,7 @@ namespace Cirara.Services
     public class GitService
     {
         private readonly IConfiguration _configuration;
+
         public GitService(IConfiguration configuration)
         {
             _configuration = configuration;
@@ -23,11 +25,7 @@ namespace Cirara.Services
 
             var options = new CloneOptions
             {
-                CredentialsProvider = (url, user, cred) => new UsernamePasswordCredentials
-                {
-                    Username = _configuration["Motion:User"],
-                    Password = _configuration["Motion:Pass"]
-                },
+                CredentialsProvider = (url, user, cred) => GetUsernamePasswordCredentials()
             };
 
             Repository.Clone(remoteUrl, repoPath, options);
@@ -40,37 +38,55 @@ namespace Cirara.Services
                 CreateRepository(remoteUrl);
 
             var repo = new Repository(repoPath);
-            var creds = new UsernamePasswordCredentials()
-            {
-                Username = _configuration["Motion:User"],
-                Password = _configuration["Motion:Pass"]
-            };
+            var creds = GetUsernamePasswordCredentials();
 
-            Credentials CredHandler(string url, string user, SupportedCredentialTypes cred) => creds;
-            var fetchOpts = new FetchOptions { CredentialsProvider = CredHandler };
+            Credentials CredHandler(string url, string user, SupportedCredentialTypes cred)
+            {
+                return creds;
+            }
+
+            var fetchOpts = new FetchOptions {CredentialsProvider = CredHandler};
 
             var remote = repo.Network.Remotes["origin"];
             var refSpecs = remote.FetchRefSpecs.Select(x => x.Specification);
 
-            var logMessage = String.Empty;
-            Commands.Fetch(repo, remote.Name, refSpecs, fetchOpts, logMessage);            
+            var logMessage = Empty;
+            Commands.Fetch(repo, remote.Name, refSpecs, fetchOpts, logMessage);
         }
 
-        public Repo GetRepository(string remoteUrl)
+        private UsernamePasswordCredentials GetUsernamePasswordCredentials(string credentialNamespace = "Motion")
         {
-            var repoPath = GetRepositoryLocalPath(remoteUrl);
-            if (!Directory.Exists(repoPath))
-                CreateRepository(remoteUrl);
-            var repository = GetRepositoryInternal(remoteUrl);
+            return new UsernamePasswordCredentials
+            {
+                Username = _configuration[$"{credentialNamespace}:User"],
+                Password = _configuration[$"{credentialNamespace}:Pass"]
+            };
+        }
 
+        public Repo GetRepository(string repoName)
+        {
+            // Get Repository URL from Secrets
+            var repoUrl = _configuration[$"{repoName}:Url"];
+            if (IsNullOrEmpty(repoUrl))
+                return null;
+
+            // Try to locate Repo on disk
+            var repoPath = GetRepositoryLocalPath(repoName);
+            if (!Directory.Exists(repoPath))
+                CreateRepository(repoName);
+
+            // Get repo from disk
+            var repository = GetRepositoryInternal(repoName);
+
+            // Create return object
             var repo = new Repo
             {
                 Name = repository.Network.Remotes.First().Name,
                 Branches = new List<Branch>()
             };
 
+            // Browse remote branches and collect commits
             foreach (var b in repository.Branches.Where(b => b.IsRemote))
-            {
                 repo.Branches.Add(new Branch
                 {
                     Commits = b.Commits.Select(x => new SlimCommit
@@ -81,8 +97,8 @@ namespace Cirara.Services
                     }).ToList(),
                     Name = b.FriendlyName.Replace("origin/", "")
                 });
-            }
 
+            // Return repo data
             return repo;
         }
 
@@ -98,9 +114,9 @@ namespace Cirara.Services
 
         public string GetRepositoryLocalPath(string remoteUrl)
         {
-            var basePath = AppDomain.CurrentDomain.BaseDirectory;            
-            Uri uri = new Uri(remoteUrl);
-            string uriWithoutScheme = uri.Host + uri.PathAndQuery + uri.Fragment;
+            var basePath = AppDomain.CurrentDomain.BaseDirectory;
+            var uri = new Uri(remoteUrl);
+            var uriWithoutScheme = uri.Host + uri.PathAndQuery + uri.Fragment;
 
             var remoteUrlFriendlyName = uriWithoutScheme.Replace("\\", "-");
             return Path.Combine(basePath, remoteUrlFriendlyName);

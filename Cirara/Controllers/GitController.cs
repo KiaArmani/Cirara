@@ -1,23 +1,23 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Data;
 using System.IO;
+using Cirara.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
-using Cirara.Models.Requests.User;
-using Cirara.Services;
 
 namespace Cirara.Controllers
 {
-    [Route("r/{repo}/{branch=main}/{commit=-1}")]
+    [Route("r/{repoName}/{branch=main}/{commit=-1}")]
     [ApiController]
     public class GitController : ControllerBase
     {
+        private readonly IConfiguration _configuration;
         private readonly GitService _gitService;
 
-        public GitController(GitService gitService)
+        public GitController(IConfiguration configuration, GitService gitService)
         {
+            _configuration = configuration;
             _gitService = gitService;
         }
 
@@ -25,7 +25,9 @@ namespace Cirara.Controllers
         /// <summary>
         ///     Returns information regarding a user.
         /// </summary>
-        /// <param name="payload">Payload (<see cref="UserControllerRootGet" />)</param>
+        /// <param name="repoName">Name of the repository</param>
+        /// <param name="branch">Optional branch to pull data from</param>
+        /// <param name="commit">Optional commit hash to pull data from</param>
         /// <response code="200">When the user was found</response>
         /// <response code="400">When the payload is missing or the user identifier is ambiguous</response>
         /// <response code="404">When the user couldn't be found</response>
@@ -37,19 +39,19 @@ namespace Cirara.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public ActionResult Get(string repo, string branch, string commit)
+        public ActionResult Get(string repoName, string branch, string commit)
         {
             // Check if payload is present
-            if (String.IsNullOrEmpty(repo))
+            if (string.IsNullOrEmpty(repoName))
                 return BadRequest("GitController (GET) - Missing repository name.");
 
-            if (String.IsNullOrEmpty(branch))
-                branch = "main";
+            if (string.IsNullOrEmpty(branch))
+                branch = _configuration["Config:DefaultBranch"];
 
             try
             {
                 // Get user from user service and return it                
-                var repository = _gitService.GetRepository("https://github.com/Regensturm/EOSIdentity.git");
+                var repository = _gitService.GetRepository(repoName);
                 return Content(JsonConvert.SerializeObject(repository));
             }
             catch (InvalidCastException e)
