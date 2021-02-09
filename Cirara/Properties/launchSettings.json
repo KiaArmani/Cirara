@@ -1,0 +1,39 @@
+{
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iis": {
+      "applicationUrl": "http://localhost/Cirara",
+      "sslPort": 0
+    },
+    "iisExpress": {
+      "applicationUrl": "http://localhost:50589",
+      "sslPort": 44367
+    }
+  },
+  "$schema": "http://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "IIS Express": {
+      "commandName": "IISExpress",
+      "launchBrowser": true,
+      "launchUrl": "weatherforecast",
+      "environmentVariables": {
+        "MT_MONGO_COLLECTION": "data",
+        "MT_MONGODB_CONNECTION": "REDACTED",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "MT_MONGO_DATABASE": "Cirara"
+      }
+    },
+    "Cirara": {
+      "commandName": "IISExpress",
+      "launchUrl": "swagger",
+      "environmentVariables": {
+        "MT_MONGO_COLLECTION": "data",
+        "MT_MONGODB_CONNECTION": "REDACTED",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "MT_MONGO_DATABASE": "Cirara"
+      },
+      "applicationUrl": "https://localhost:5001;http://localhost:5000"
+    }
+  }
+}

@@ -1,0 +1,30 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30611.23
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{6027E913-0D44-4E6E-8CC6-F846CEDDA57A}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+	EndProjectSection
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cirara", "Cirara\Cirara.csproj", "{96EC5733-947F-4E7E-B0D3-0A23A6F9C418}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{96EC5733-947F-4E7E-B0D3-0A23A6F9C418}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{96EC5733-947F-4E7E-B0D3-0A23A6F9C418}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{96EC5733-947F-4E7E-B0D3-0A23A6F9C418}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{96EC5733-947F-4E7E-B0D3-0A23A6F9C418}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C4C935D5-B709-4F09-9CDA-752775E3257A}
+	EndGlobalSection
+EndGlobal
