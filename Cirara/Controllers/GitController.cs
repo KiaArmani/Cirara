@@ -1,4 +1,5 @@
-﻿using System;
+﻿#nullable enable
+using System;
 using System.IO;
 using Cirara.Services;
 using Microsoft.AspNetCore.Http;
@@ -6,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Net.Http.Headers;
 using Newtonsoft.Json;
+using static System.String;
 
 namespace Cirara.Controllers
 {
@@ -29,11 +31,6 @@ namespace Cirara.Controllers
         /// <param name="repoName">Name of the repository</param>
         /// <param name="branchName">Optional branch to pull data from</param>
         /// <param name="commitHash">Optional SHA-1 commit hash to pull data from</param>
-        /// <response code="200">When the user was found</response>
-        /// <response code="400">When the payload is missing or the user identifier is ambiguous</response>
-        /// <response code="404">When the user couldn't be found</response>
-        /// <response code="422">When the user identifier couldn't be parsed as GUID</response>
-        /// <response code="500">When any other unhandled exception</response>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -43,22 +40,22 @@ namespace Cirara.Controllers
         public ActionResult Get(string repoName, string? branchName, string? commitHash)
         {
             // Check if payload is present
-            if (string.IsNullOrEmpty(repoName))
+            if (IsNullOrEmpty(repoName))
                 return BadRequest("GitController (GET) - Missing repository name.");
 
             try
             {
-                if (String.IsNullOrEmpty(branchName) && string.IsNullOrEmpty(commitHash))
+                if (IsNullOrEmpty(branchName) && IsNullOrEmpty(commitHash))
                 {
                     var repository = _gitService.GetRepository(repoName);
                     return Content(JsonConvert.SerializeObject(repository), MediaTypeHeaderValue.Parse("application/json"));
                 }
-                else if (!string.IsNullOrEmpty(branchName) && string.IsNullOrEmpty(commitHash))
+                else if (!IsNullOrEmpty(branchName) && IsNullOrEmpty(commitHash))
                 {
                     var branch = _gitService.GetBranch(repoName, branchName);
                     return Content(JsonConvert.SerializeObject(branch), MediaTypeHeaderValue.Parse("application/json"));
                 }
-                else if (!string.IsNullOrEmpty(branchName) && !string.IsNullOrEmpty(commitHash))
+                else if (!IsNullOrEmpty(branchName) && !IsNullOrEmpty(commitHash))
                 {
                     var commit = _gitService.GetSlimCommit(repoName, branchName, commitHash);
                     return Content(JsonConvert.SerializeObject(commit), MediaTypeHeaderValue.Parse("application/json"));
