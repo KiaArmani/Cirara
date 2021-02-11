@@ -1,6 +1,5 @@
 ﻿#nullable enable
 using System;
-using System.IO;
 using Cirara.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -48,14 +47,17 @@ namespace Cirara.Controllers
                 if (IsNullOrEmpty(branchName) && IsNullOrEmpty(commitHash))
                 {
                     var repository = _gitService.GetRepository(repoName);
-                    return Content(JsonConvert.SerializeObject(repository), MediaTypeHeaderValue.Parse("application/json"));
+                    return Content(JsonConvert.SerializeObject(repository),
+                        MediaTypeHeaderValue.Parse("application/json"));
                 }
-                else if (!IsNullOrEmpty(branchName) && IsNullOrEmpty(commitHash))
+
+                if (!IsNullOrEmpty(branchName) && IsNullOrEmpty(commitHash))
                 {
                     var branch = _gitService.GetBranch(repoName, branchName);
                     return Content(JsonConvert.SerializeObject(branch), MediaTypeHeaderValue.Parse("application/json"));
                 }
-                else if (!IsNullOrEmpty(branchName) && !IsNullOrEmpty(commitHash))
+
+                if (!IsNullOrEmpty(branchName) && !IsNullOrEmpty(commitHash))
                 {
                     var commit = _gitService.GetSlimCommit(repoName, branchName, commitHash);
                     return Content(JsonConvert.SerializeObject(commit), MediaTypeHeaderValue.Parse("application/json"));

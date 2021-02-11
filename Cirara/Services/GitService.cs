@@ -19,11 +19,28 @@ namespace Cirara.Services
             _configuration = configuration;
         }
 
+        #region Commits
+
+        public SlimCommit GetSlimCommit(string repoName, string branchName, string commitHash)
+        {
+            var gitBranch = GetGitBranch(repoName, branchName);
+            var gitCommit = gitBranch.Commits.Single(x => x.Sha.Equals(commitHash));
+            return new SlimCommit
+            {
+                CommitDate = gitCommit.Committer.When,
+                Commiter = gitCommit.Committer.Name,
+                CommitMessage = gitCommit.Message
+            };
+        }
+
+        #endregion
+
         #region Repos
+
         public Repo GetRepository(string repoName)
         {
             var repository = GetRepositoryFromDisk(repoName);
-            if(repository == null)
+            if (repository == null)
                 return null;
 
             // Create return object
@@ -40,6 +57,7 @@ namespace Cirara.Services
             // Return repo data
             return repo;
         }
+
         public void CreateRepository(string remoteUrl)
         {
             var repoPath = GetRepositoryLocalPath(remoteUrl);
@@ -51,6 +69,7 @@ namespace Cirara.Services
 
             Repository.Clone(remoteUrl, repoPath, options);
         }
+
         public void UpdateRepository(string remoteUrl)
         {
             var repoPath = GetRepositoryLocalPath(remoteUrl);
@@ -65,7 +84,7 @@ namespace Cirara.Services
                 return creds;
             }
 
-            var fetchOpts = new FetchOptions { CredentialsProvider = CredHandler };
+            var fetchOpts = new FetchOptions {CredentialsProvider = CredHandler};
 
             var remote = repo.Network.Remotes["origin"];
             var refSpecs = remote.FetchRefSpecs.Select(x => x.Specification);
@@ -89,10 +108,11 @@ namespace Cirara.Services
             var repo = new Repository(repoPath);
             return repo;
         }
+
         public string GetRepositoryLocalPath(string remoteUrl)
         {
             var basePath = AppDomain.CurrentDomain.BaseDirectory;
-            if (string.IsNullOrEmpty(basePath))
+            if (IsNullOrEmpty(basePath))
                 throw new InvalidOperationException("AppDomain.CurrentDomain.BaseDirectory returned null");
 
             var uri = new Uri(remoteUrl);
@@ -101,6 +121,7 @@ namespace Cirara.Services
             var remoteUrlFriendlyName = uriWithoutScheme.Replace("\\", "-");
             return Path.Combine(basePath, remoteUrlFriendlyName);
         }
+
         private UsernamePasswordCredentials GetUsernamePasswordCredentials(string credentialNamespace = "default")
         {
             return new UsernamePasswordCredentials
@@ -109,19 +130,23 @@ namespace Cirara.Services
                 Password = _configuration[$"{credentialNamespace}:Pass"]
             };
         }
+
         #endregion
 
         #region Branches
+
         public Branch GetBranch(string repoName, string branchName)
         {
             var gitBranch = GetGitBranch(repoName, branchName);
             return gitBranch == null ? null : GetBranchFromGitBranch(gitBranch);
         }
+
         private LibGit2Sharp.Branch GetGitBranch(string repoName, string branchName)
         {
             var repository = GetRepositoryFromDisk(repoName);
             return repository?.Branches.Single(x => x.FriendlyName.Equals($"origin/{branchName}"));
         }
+
         private static Branch GetBranchFromGitBranch(LibGit2Sharp.Branch gitBranch)
         {
             return new Branch
@@ -135,20 +160,7 @@ namespace Cirara.Services
                 Name = gitBranch.FriendlyName.Replace("origin/", "")
             };
         }
-        #endregion
 
-        #region Commits
-        public SlimCommit GetSlimCommit(string repoName, string branchName, string commitHash)
-        {
-            var gitBranch = GetGitBranch(repoName, branchName);
-            var gitCommit = gitBranch.Commits.Single(x => x.Sha.Equals(commitHash));
-            return new SlimCommit
-            {
-                CommitDate = gitCommit.Committer.When,
-                Commiter = gitCommit.Committer.Name,
-                CommitMessage = gitCommit.Message
-            };
-        }
         #endregion
     }
 }
