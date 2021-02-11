@@ -65,18 +65,8 @@ namespace Cirara.Services
 
         public Repo GetRepository(string repoName)
         {
-            // Get Repository URL from Secrets
-            var repoUrl = _configuration[$"{repoName}:Url"];
-            if (IsNullOrEmpty(repoUrl))
+            if (GetRepositoryFromDisk(repoName, out var repository)) 
                 return null;
-
-            // Try to locate Repo on disk
-            var repoPath = GetRepositoryLocalPath(repoName);
-            if (!Directory.Exists(repoPath))
-                CreateRepository(repoName);
-
-            // Get repo from disk
-            var repository = GetRepositoryInternal(repoName);
 
             // Create return object
             var repo = new Repo
@@ -87,19 +77,70 @@ namespace Cirara.Services
 
             // Browse remote branches and collect commits
             foreach (var b in repository.Branches.Where(b => b.IsRemote))
-                repo.Branches.Add(new Branch
-                {
-                    Commits = b.Commits.Select(x => new SlimCommit
-                    {
-                        CommitDate = x.Committer.When,
-                        Commiter = x.Committer.Name,
-                        CommitMessage = x.Message
-                    }).ToList(),
-                    Name = b.FriendlyName.Replace("origin/", "")
-                });
+                repo.Branches.Add(GetBranchFromGitBranch(b));
 
             // Return repo data
             return repo;
+        }
+
+        public Branch GetBranch(string repoName, string branchName)
+        {
+            if (GetGitBranch(repoName, branchName, out var gitBranch)) 
+                return null;
+            return gitBranch == null ? null : GetBranchFromGitBranch(gitBranch);
+        }
+
+        private bool GetGitBranch(string repoName, string branchName, out LibGit2Sharp.Branch gitBranch)
+        {
+            gitBranch = null;
+            if (GetRepositoryFromDisk(repoName, out var repository))
+                return true;
+            gitBranch = repository.Branches.Single(x => x.FriendlyName.Equals($"origin/{branchName}"));
+            return false;
+        }
+
+        public SlimCommit GetSlimCommit(string repoName, string branchName, string commitHash)
+        {
+            GetGitBranch(repoName, branchName, out var gitBranch);
+            var gitCommit = gitBranch.Commits.Single(x => x.Sha.Equals(commitHash));
+            return new SlimCommit
+            {
+                CommitDate = gitCommit.Committer.When,
+                Commiter = gitCommit.Committer.Name,
+                CommitMessage = gitCommit.Message
+            };
+        }
+
+        private static Branch GetBranchFromGitBranch(LibGit2Sharp.Branch gitBranch)
+        {
+            return new Branch
+            {
+                Commits = gitBranch.Commits.Select(x => new SlimCommit
+                {
+                    CommitDate = x.Committer.When,
+                    Commiter = x.Committer.Name,
+                    CommitMessage = x.Message
+                }).ToList(),
+                Name = gitBranch.FriendlyName.Replace("origin/", "")
+            };
+        }
+
+        private bool GetRepositoryFromDisk(string repoName, out Repository repository)
+        {
+            // Get Repository URL from Secrets
+            repository = null;
+            var repoUrl = _configuration[$"{repoName}:Url"];
+            if (IsNullOrEmpty(repoUrl))
+                return false;
+
+            // Try to locate Repo on disk
+            var repoPath = GetRepositoryLocalPath(repoUrl);
+            if (!Directory.Exists(repoPath))
+                CreateRepository(repoUrl);
+
+            // Get repo from disk
+            repository = GetRepositoryInternal(repoUrl);
+            return false;
         }
 
         public Repository GetRepositoryInternal(string remoteUrl)
