@@ -29,7 +29,8 @@ namespace Cirara.Services
             {
                 CommitDate = gitCommit.Committer.When,
                 Commiter = gitCommit.Committer.Name,
-                CommitMessage = gitCommit.Message
+                CommitMessage = gitCommit.Message,
+                CommitHash = gitCommit.Sha
             };
         }
 
@@ -155,7 +156,8 @@ namespace Cirara.Services
                 {
                     CommitDate = x.Committer.When,
                     Commiter = x.Committer.Name,
-                    CommitMessage = x.Message
+                    CommitMessage = x.Message,
+                    CommitHash = x.Sha
                 }).ToList(),
                 Name = gitBranch.FriendlyName.Replace("origin/", "")
             };

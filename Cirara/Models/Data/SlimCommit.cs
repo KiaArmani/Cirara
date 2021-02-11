@@ -18,5 +18,10 @@ namespace Cirara.Models.Data
         ///     Date of when the commit was done
         /// </summary>
         public DateTimeOffset CommitDate { get; set; }
+
+        /// <summary>
+        /// SHA-1 hash of the commit
+        /// </summary>
+        public string CommitHash { get; set; }
     }
 }
