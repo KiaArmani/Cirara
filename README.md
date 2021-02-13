@@ -7,7 +7,7 @@ Cirara (Commits in Repository as REST API) provides a JSON log of commits from G
 Inspired by https://commits.facepunch.com/
 
 - Configurable via dotnet secrets. (https://docs.microsoft.com/en-us/aspnet/core/security/app-secrets?view=aspnetcore-5.0&tabs=linux)
-- Simple syntax (https://api:port/r/{repoName}/{branch=main}/{commit=-1})
+- Simple syntax (https://api:port/r/{repoName}/{branch=YourBranch}/{commit=SHA1HashHere})
 
 ## Requirements
 
