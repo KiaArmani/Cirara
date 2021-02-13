@@ -13,10 +13,12 @@ namespace Cirara.Services
     public class GitService
     {
         private readonly IConfiguration _configuration;
+        private readonly Dictionary<string, DateTime> _repoUpdateDictionary;
 
         public GitService(IConfiguration configuration)
         {
             _configuration = configuration;
+            _repoUpdateDictionary = new Dictionary<string, DateTime>();
         }
 
         #region Commits
@@ -59,26 +61,26 @@ namespace Cirara.Services
             return repo;
         }
 
-        public void CreateRepository(string remoteUrl)
+        public void CreateRepository(string repoName, string remoteUrl)
         {
             var repoPath = GetRepositoryLocalPath(remoteUrl);
 
             var options = new CloneOptions
             {
-                CredentialsProvider = (url, user, cred) => GetUsernamePasswordCredentials()
+                CredentialsProvider = (url, user, cred) => GetUsernamePasswordCredentials(repoName)
             };
 
             Repository.Clone(remoteUrl, repoPath, options);
         }
 
-        public void UpdateRepository(string remoteUrl)
+        public void UpdateRepository(string repoName, string remoteUrl)
         {
             var repoPath = GetRepositoryLocalPath(remoteUrl);
             if (!Directory.Exists(repoPath))
-                CreateRepository(remoteUrl);
+                CreateRepository(repoName, remoteUrl);
 
             var repo = new Repository(repoPath);
-            var creds = GetUsernamePasswordCredentials();
+            var creds = GetUsernamePasswordCredentials(repoName);
 
             Credentials CredHandler(string url, string user, SupportedCredentialTypes cred)
             {
@@ -96,6 +98,8 @@ namespace Cirara.Services
 
         private Repository GetRepositoryFromDisk(string repoName)
         {
+            var now = DateTime.Now;
+
             // Get Repository URL from Secrets
             var repoUrl = _configuration[$"{repoName}:Url"];
             if (IsNullOrEmpty(repoUrl))
@@ -104,7 +108,21 @@ namespace Cirara.Services
             // Try to locate Repo on disk
             var repoPath = GetRepositoryLocalPath(repoUrl);
             if (!Directory.Exists(repoPath))
-                CreateRepository(repoUrl);
+                CreateRepository(repoName, repoUrl);
+
+            // Add Repo to Update dictionary
+            if (!_repoUpdateDictionary.ContainsKey(repoName))
+                _repoUpdateDictionary.Add(repoName, now);
+            else
+            {
+                _repoUpdateDictionary.TryGetValue(repoName, out var lastUpdate);
+                if ((now - lastUpdate).TotalSeconds > Int64.Parse(_configuration["DefaultPullDelayInSeconds"]))
+                {
+                    UpdateRepository(repoName, repoUrl);
+                    Console.WriteLine($"Updating {repoName}.");
+                    _repoUpdateDictionary[repoName] = now;
+                }
+            }
 
             var repo = new Repository(repoPath);
             return repo;
