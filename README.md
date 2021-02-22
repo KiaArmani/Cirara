@@ -1,7 +1,5 @@
 # Cirara
 
-**Note: This is early in development (started 09/02/2021). Some features are not available yet.**
-
 Cirara (Commits in Repository as REST API) provides a JSON log of commits from Git repositories.
 
 Inspired by https://commits.facepunch.com/
